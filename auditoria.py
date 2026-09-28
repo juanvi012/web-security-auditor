@@ -16,7 +16,7 @@ Uso:
     python auditoria_seguridad.py --url https://ejemplo.com --output informe.json
     python auditoria_seguridad.py --url https://ejemplo.com --max-pages 50 --no-nmap
 
-⚠️  AVISO LEGAL: Solo para uso en sistemas propios o con autorización
+    AVISO LEGAL: Solo para uso en sistemas propios o con autorización
     escrita. Acceso no autorizado → Código Penal art. 197 bis (España).
 """
 
@@ -90,10 +90,8 @@ def res(nivel, msg, detalle="", ver="", ataque="", defensa="", url_origen=""):
             print(f"         {Fore.GREEN+Style.DIM}{ln}{Style.RESET_ALL}")
 
 
-# ════════════════════════════════════════════════════════════════════
 # VERIFICADOR DE TERMINAL
 # Ejecuta comandos reales y muestra resultado con interpretación
-# ════════════════════════════════════════════════════════════════════
 class VerificadorTerminal:
     """Abre un subproceso para ejecutar verificaciones reales y
     muestra la salida con interpretación de lo que significa."""
@@ -432,9 +430,7 @@ class VerificadorTerminal:
         print(f"      {Fore.BLUE}  └────────────────────────────────────────────────{Style.RESET_ALL}")
 
 
-# ════════════════════════════════════════════════════════════════════
 # CRAWLER — SOLO .html y .php (estricto)
-# ════════════════════════════════════════════════════════════════════
 class Crawler:
     """Rastrea únicamente páginas .html y .php dentro del mismo dominio.
     Cualquier otra extensión o recurso estático es ignorado."""
@@ -452,7 +448,7 @@ class Crawler:
         self.to_visit: list = [self._normalizar(base_url)]
         self.pages:    dict = {}      # url_normalizada → Response
 
-    # ── Normalización ────────────────────────────────────────────
+    #Normalización
     def _normalizar(self, url: str) -> str:
         """Quita fragment y query string — la misma página con ?id=1 y ?id=2
         es la misma página para nosotros."""
@@ -472,7 +468,7 @@ class Crawler:
             return True
         return ext in self.EXT_PERMITIDAS
 
-    # ── Extracción de links ──────────────────────────────────────
+    #Extracción de links
     def _extraer_links(self, base_url: str, html: str) -> list:
         """Extrae solo href de <a> — nunca src de scripts/estilos/imágenes."""
         links = []
@@ -495,7 +491,7 @@ class Crawler:
                 links.append(norm)
         return links
 
-    # ── Crawl principal ──────────────────────────────────────────
+    #Crawl principal
     def crawl(self) -> dict:
         print(f"\n  {Fore.CYAN+Style.BRIGHT}🕷  Rastreando páginas .html y .php "
               f"(máx. {self.max_pages})...{Style.RESET_ALL}")
@@ -513,7 +509,7 @@ class Crawler:
 
                 ct = r.headers.get("Content-Type", "").lower()
 
-                # ── Filtro por Content-Type ───────────────────
+                # Filtro por Content-Type
                 # Aunque la URL parezca .php, si el servidor devuelve
                 # image/png u otro binario → descartamos
                 if "text/html" not in ct:
@@ -521,12 +517,12 @@ class Crawler:
                           f"[{r.status_code}] ({ct.split(';')[0].strip()}): {url}{Style.RESET_ALL}")
                     continue
 
-                # ── Guardar la página ─────────────────────────
+                # Guardar la página
                 self.pages[url] = r
                 color = Fore.GREEN if r.status_code == 200 else Fore.YELLOW
                 print(f"    {color}✓{Style.RESET_ALL} [{r.status_code}] {url}")
 
-                # ── Extraer links del HTML ─────────────────────
+                #Extraer links del HTM
                 if r.text:
                     nuevos = self._extraer_links(url, r.text)
                     for lnk in nuevos:
@@ -548,9 +544,7 @@ class Crawler:
         return self.pages
 
 
-# ════════════════════════════════════════════════════════════════════
 # NMAP
-# ════════════════════════════════════════════════════════════════════
 class AnalizadorNmap:
 
     SERVICIOS = {
@@ -750,9 +744,7 @@ class AnalizadorNmap:
         return hallazgos
 
 
-# ════════════════════════════════════════════════════════════════════
 # AUDITOR PRINCIPAL
-# ════════════════════════════════════════════════════════════════════
 class AuditorSeguridad:
 
     def __init__(self, url, max_pages=MAX_PAGES, run_nmap=True):
@@ -796,7 +788,7 @@ class AuditorSeguridad:
         except Exception:
             return None
 
-    # ── FASE 1: CRAWLING ────────────────────────────────────────
+    #FASE 1: CRAWLING
     def fase_crawling(self):
         titulo("FASE 1 — RASTREO DE PÁGINAS HTML")
         crawler = Crawler(self.url, self.max_pages, self.session)
@@ -806,7 +798,7 @@ class AuditorSeguridad:
         elif self.pages:
             self.response = list(self.pages.values())[0]
 
-    # ── FASE 2: NMAP ─────────────────────────────────────────────
+    #FASE 2: NMAP
     def fase_nmap(self):
         titulo("FASE 2 — ANÁLISIS DE PUERTOS (NMAP)")
         try:
@@ -817,13 +809,11 @@ class AuditorSeguridad:
         for h in nmap.ejecutar():
             self.vulns.append(h)
 
-    # ════════════════════════════════════════════════════════════
     # FASE 3: ANÁLISIS WEB
-    # ════════════════════════════════════════════════════════════
     def fase_analisis(self):
         titulo("FASE 3 — ANÁLISIS DE SEGURIDAD WEB")
 
-    # ── 3.1 SSL ──────────────────────────────────────────────────
+    # 3.1 SSL
     def verificar_ssl(self):
         sub("3.1 Certificado TLS/SSL")
         self.vt.verificar_ssl_terminal(self.hostname)
@@ -869,7 +859,7 @@ class AuditorSeguridad:
         except Exception as e:
             res("MEDIA",f"No se pudo inspeccionar SSL: {e}")
 
-    # ── 3.2 CABECERAS ────────────────────────────────────────────
+    # 3.2 CABECERAS
     # Estrategia anti-duplicados:
     #   - Analiza la página PRINCIPAL para obtener el valor de la cabecera
     #   - Si falta, recorre el resto de páginas para listar cuáles también fallan
@@ -934,7 +924,7 @@ class AuditorSeguridad:
                 if cab in h and cab not in reveladas:
                     reveladas[cab] = (h[cab], page_url)
 
-        # ── Imprimir cabeceras de seguridad (UNA entrada por cabecera) ──
+        # Imprimir cabeceras de seguridad (UNA entrada por cabecera)
         for cab, (nivel, desc, sol, atk) in cabeceras_req.items():
             datos = resumen[cab]
             ausentes = datos["ausente_en"]
@@ -1003,7 +993,7 @@ class AuditorSeguridad:
                                else f"{n_ausente} páginas (ver descripción)"
                 )
 
-        # ── Cabeceras que revelan información (una entrada por cabecera) ──
+        # Cabeceras que revelan información (una entrada por cabecera)
         desc_exp = {
             "server":           "Revela tecnología y versión del servidor web.",
             "x-powered-by":     "Revela lenguaje o framework backend.",
@@ -1026,7 +1016,7 @@ class AuditorSeguridad:
                       "Enmascarar o eliminar cabeceras informativas.",
                       url_origen=primera_url)
 
-    # ── 3.3 COOKIES ──────────────────────────────────────────────
+    # 3.3 COOKIES
     def verificar_cookies(self):
         sub("3.3 Cookies")
         if not self.response: return
@@ -1084,7 +1074,7 @@ class AuditorSeguridad:
                           "CSRF.",
                           "SameSite=Strict.",url_origen=self.url)
 
-    # ── 3.4 DNS ──────────────────────────────────────────────────
+    # 3.4 DNS
     def verificar_dns(self):
         sub("3.4 Registros DNS")
         try:
@@ -1129,7 +1119,7 @@ class AuditorSeguridad:
         else:
             res("OK","DMARC configurado ✓")
 
-    # ── 3.5 RUTAS SENSIBLES ──────────────────────────────────────
+    # 3.5 RUTAS SENSIBLES
     def verificar_rutas_sensibles(self):
         sub("3.5 Archivos y rutas sensibles")
         rutas=[
@@ -1191,11 +1181,11 @@ class AuditorSeguridad:
             elif r and r.status_code==403 and nivel in ("CRITICA","ALTA"):
                 res("BAJA",f"[403] Bloqueado correctamente: {ruta}")
 
-    # ── 3.6 INYECCIONES SQL + XSS + SSTI (todas las páginas) ────
+    # 3.6 INYECCIONES SQL + XSS + SSTI (todas las páginas)
     def verificar_inyecciones(self):
         sub("3.6 Pruebas de inyección SQL, XSS y SSTI")
 
-        # ── Recopilar URLs con parámetros de todas las páginas ───
+        # Recopilar URLs con parámetros de todas las páginas
         # Clave: (path_normalizado, param) → primera URL completa con ese param
         # Así evitamos probar el mismo parámetro en 20 páginas distintas
         param_index: dict = {}   # (path, param) → url_con_params
@@ -1241,7 +1231,7 @@ class AuditorSeguridad:
             f"Parámetros únicos a probar: {params_unicos} "
             f"en {paths_unicos} rutas distintas")
 
-        # ── Payloads ─────────────────────────────────────────────
+        # Payloads
         sqli_payloads = [
             ("'",                  "comilla simple — error de sintaxis básico"),
             ("1' OR '1'='1",       "bypass clásico OR"),
@@ -1274,7 +1264,7 @@ class AuditorSeguridad:
 
         for (base_path, param), (page_url, params) in list(param_index.items())[:30]:
 
-            # ════ SQLi ══════════════════════════════════════════
+            # SQLi
             key_sql = ("sqli", param)
             if key_sql not in ya_reportado:
                 print(f"\n  {Fore.MAGENTA}  ─ SQLi: '{param}' @ {base_path[:65]}{Style.RESET_ALL}")
@@ -1330,7 +1320,7 @@ class AuditorSeguridad:
                                   "Prepared statements + WAF + mínimo privilegio en BD.",
                                   url_origen=page_url)
 
-            # ════ XSS reflejado ══════════════════════════════════
+            # XSS reflejado
             key_xss = ("xss", param)
             if key_xss not in ya_reportado:
                 pt_xss   = {**params, param: xss_payload}
@@ -1369,7 +1359,7 @@ class AuditorSeguridad:
                               "Output encoding + CSP + HttpOnly en cookies.",
                               url_origen=page_url)
 
-            # ════ SSTI ══════════════════════════════════════════
+            # SSTI
             key_ssti = ("ssti", param)
             if key_ssti not in ya_reportado:
                 pt_ssti  = {**params, param: ssti_payload}
@@ -1402,7 +1392,7 @@ class AuditorSeguridad:
                 except Exception:
                     pass
 
-            # ════ Open Redirect ══════════════════════════════════
+            # Open Redirect
             key_rd = ("redirect", param)
             if key_rd not in ya_reportado:
                 pt_rd  = {**params, param: "https://evil.example.com"}
@@ -1436,7 +1426,7 @@ class AuditorSeguridad:
                 except Exception:
                     pass
 
-    # ── 3.7 FORMULARIOS ──────────────────────────────────────────
+    # 3.7 FORMULARIOS
     def verificar_formularios(self):
         sub("3.7 Formularios y protecciones")
         tokens_csrf=["csrf","_token","authenticity_token","__requestverificationtoken",
@@ -1506,7 +1496,7 @@ class AuditorSeguridad:
                                   "Validación MIME + sin ejecución PHP en /uploads.",
                                   url_origen=page_url)
 
-    # ── 3.8 CORS ─────────────────────────────────────────────────
+    # 3.8 CORS
     def verificar_cors(self):
         sub("3.8 CORS y control de acceso")
         self.vt.verificar_cors_terminal(self.url)
@@ -1546,7 +1536,7 @@ class AuditorSeguridad:
                               "Descarga de webshells, dumps, logs.",
                               "autoindex off + index.html vacío.",url_origen=url_dir)
 
-    # ── 3.9 INFORMACIÓN SENSIBLE ──────────────────────────────────
+    # 3.9 INFORMACIÓN SENSIBLE
     def verificar_info_sensible(self):
         sub("3.9 Información sensible en código fuente")
         patrones=[
@@ -1590,7 +1580,7 @@ class AuditorSeguridad:
                         ataque="Reconocimiento de red interna para pivoting.",
                         defensa="Elimina referencias a IPs internas.",url_origen=page_url)
 
-    # ── 3.10 RATE LIMITING ────────────────────────────────────────
+    #3.10 RATE LIMITING
     def verificar_rate_limiting(self):
         sub("3.10 Rate limiting en login")
         login_paths=["/login","/wp-login.php","/admin/login","/signin","/auth/login"]
@@ -1618,7 +1608,7 @@ class AuditorSeguridad:
                 codes.append(0)
 
         if codes and all(c in (200,302,400,401,422) for c in codes if c):
-            print(f"      {Fore.RED}  │ ❌ Todos los intentos devuelven el mismo código{Style.RESET_ALL}")
+            print(f"      {Fore.RED}  │    Todos los intentos devuelven el mismo código{Style.RESET_ALL}")
             print(f"      {Fore.RED}  │    Sin bloqueo ni CAPTCHA → SIN RATE LIMITING{Style.RESET_ALL}")
             print(f"      {Fore.BLUE}  └────────────────────────────────────────────────{Style.RESET_ALL}")
             res("MEDIA","Sin rate limiting en login",
@@ -1635,7 +1625,7 @@ class AuditorSeguridad:
                       "Hydra + credential stuffing.",
                       "CAPTCHA + 2FA + alertas.",url_origen=f"{self.base}{login_url}")
         else:
-            print(f"      {Fore.GREEN}  │ ✅ Posible protección detectada (códigos variaron){Style.RESET_ALL}")
+            print(f"      {Fore.GREEN}  │  Posible protección detectada (códigos variaron){Style.RESET_ALL}")
             print(f"      {Fore.BLUE}  └────────────────────────────────────────────────{Style.RESET_ALL}")
             res("OK",f"Posible rate limiting activo (códigos: {set(codes)})")
 
@@ -1659,7 +1649,7 @@ class AuditorSeguridad:
         print(f"\n  Total: {Fore.YELLOW+Style.BRIGHT}{len(self.vulns)}{Style.RESET_ALL} hallazgos")
 
         if not self.vulns:
-            print(f"\n  {Fore.GREEN+Style.BRIGHT}✅ Sin vulnerabilidades significativas{Style.RESET_ALL}")
+            print(f"\n  {Fore.GREEN+Style.BRIGHT} Sin vulnerabilidades significativas{Style.RESET_ALL}")
             return
 
         titulo("VULNERABILIDADES POR URL")
@@ -1707,11 +1697,11 @@ class AuditorSeguridad:
     def _punt(self,conteos):
         pesos={"CRITICA":25,"ALTA":10,"MEDIA":5,"BAJA":1}
         score=max(0,100-sum(conteos.get(k,0)*p for k,p in pesos.items()))
-        if score>=85:   e,nv="Excelente 🏆","OK"
-        elif score>=70: e,nv="Bueno ✓","OK"
-        elif score>=50: e,nv="Moderado ⚠️","MEDIA"
-        elif score>=30: e,nv="Deficiente ❌","ALTA"
-        else:           e,nv="Crítico ☠️","CRITICA"
+        if score>=85:   e,nv="Excelente ","OK"
+        elif score>=70: e,nv="Bueno ","OK"
+        elif score>=50: e,nv="Moderado ","MEDIA"
+        elif score>=30: e,nv="Deficiente ","ALTA"
+        else:           e,nv="Crítico ","CRITICA"
         c_=col(nv)
         titulo(f"PUNTUACIÓN: {c_}{score}/100 — {e}{Style.RESET_ALL}")
         barra=f"{c_}{'█'*(score//5)}{Style.RESET_ALL}{'░'*(20-score//5)}"
@@ -1723,7 +1713,7 @@ class AuditorSeguridad:
                "vulnerabilidades":self.vulns,"total":len(self.vulns)}
         with open(ruta,"w",encoding="utf-8") as f:
             json.dump(datos,f,ensure_ascii=False,indent=2)
-        print(f"\n  📄 JSON: {ruta}")
+        print(f"\n   JSON: {ruta}")
 
     def ejecutar(self):
         titulo(f"AUDITORÍA DE CIBERSEGURIDAD WEB v{VERSION}")
